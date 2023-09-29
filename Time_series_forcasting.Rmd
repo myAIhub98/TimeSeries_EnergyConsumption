@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(prophet)
+library(readr)
+library(ggplot2)
+library(forecast)
+
+```
+
+```{r}
+Ts <- read_csv("C:/Users/Downloads/TimeSeries_EnergyConsumption/f_ts.csv")
+Ts
+```
+
+
+```{r}
+L <- unique(split(Ts, Ts$NAME))
+L
+```
+
+
+```{r}
+for(i in 1:92){
+  L_ts <- ts(L[[i]]$KWH_PERIOD, frequency = 12, start= c(2019,01,01))
+  ggtsdisplay(L_ts, main = unique(L[[i]]$NAME))
+}
+```
+
+```{r}
+for(i in 1:92){
+  L_ts <- ts(L[[i]]$KWH_PERIOD, frequency = 12, start= c(2019,01,01))
+  L_diff <- diff(L_ts)
+  ggtsdisplay(L_diff, main = unique(L[[i]]$NAME))
+}
+
+```
+#Predictions with Auto Arima
+
+##Run a standard model
+
+```{r}
+for(i in 1:92){
+  L_ts <- ts(L[[i]]$KWH_PERIOD, frequency = 12, start= c(2019,01,01))
+  L_arima <- auto.arima(L_ts)
+  checkresiduals(L_arima)
+}
+
+```
+
+```{r}
+for(i in 1:92){
+  L_ts <- ts(L[[i]]$KWH_PERIOD, frequency = 12, start= c(2019,01,01))
+  L_arima <- auto.arima(L_ts)
+  modelforcast <- forecast(L_arima, h = 6)
+  plot(modelforcast, xlab = "Date", ylab = "KWH", sub = unique(L[[i]]$NAME))
+}
+```
+
+##Improve the model
+
+```{r}
+for(i in 1:92){
+  L_ts <- ts(L[[i]]$KWH_PERIOD, frequency = 12, start= c(2019,01,01))
+  L_arima_ <- auto.arima(L_ts, d = 1 , ic = c("aicc", "aic", "bic"))
+  checkresiduals(L_arima_)
+}
+```
+
+
+```{r}
+for(i in 1:92){
+  L_ts <- ts(L[[i]]$KWH_PERIOD, frequency = 12, start= c(2019,01,01))
+  L_arima <- auto.arima(L_ts,d = 1, stationary = FALSE, seasonal = TRUE, ic = c("aicc", "aic", "bic"), stepwise = TRUE, nmodels = 100, trace = FALSE, approximation = TRUE)
+  modelforcast <- forecast(L_arima)
+  plot(modelforcast, xlab = "Date", ylab = "KWH", sub = unique(L[[i]]$NAME))
+}
+```
+
+
+
+
+
